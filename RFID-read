@@ -1,0 +1,31 @@
+#include <SPI.h>
+#include <MFRC522.h>
+
+#define RST_PIN     9      // 重置引脚
+#define SS_PIN      10     // 选择引脚
+
+MFRC522 rfid(SS_PIN, RST_PIN);   // 创建 MFRC522 实例
+
+void setup() {
+  Serial.begin(9600);    // 初始化串口通信
+  SPI.begin();           // 启动 SPI 总线
+  rfid.PCD_Init();       // 初始化 RC522
+}
+
+void loop() {
+  // 检查是否有新卡片靠近读卡器
+  if (rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial()) {
+    // 获取 UID（卡片 ID）信息
+    String cardID = "";
+    for (byte i = 0; i < rfid.uid.size; i++) {
+      cardID += String(rfid.uid.uidByte[i] < 0x10 ? "0" : "");
+      cardID += String(rfid.uid.uidByte[i], HEX);
+    }
+    
+    Serial.print("卡片 ID: ");
+    Serial.println(cardID);
+    
+    rfid.PICC_HaltA();          // 停止卡片通信
+    rfid.PCD_StopCrypto1();     // 停止加密
+  }
+}
